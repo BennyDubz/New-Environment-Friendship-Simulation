@@ -1,14 +1,31 @@
+# Ben Williams '25, Sam Starrs '26
+# April 2024
+
+# For the logic of characteristics and preferences
 from Person import Person
+
+# For all plotting and graph making
 import matplotlib.pyplot as plt
 import networkx as nx
 
+# To help with sorting the nodes
 from operator import itemgetter
 
+# For all randomization of interactions and people generation
 import random
 
 
+# A simulation
 class Simulation:
+    """
+    min_friends - the minimum number of **max friends** an individual person might have. Default: 3
+    max_friends - the maximum number of **max friends** an individual person might have. Default: 20
+    num_people - the number of people who will be in the simulation. Default: 100
+    min_interactions - The minimum number of interactions someone could have in a day. Default: 5
+    max_interactions - The maximum number of interactions someone could have in a day. Default: 30
+    """
     def __init__(self, min_friends=3, max_friends=20, num_people=100, min_interactions=5, max_interactions=30):
+
         self.min_friends = min_friends
         self.max_friends = max_friends
         self.num_people = num_people
@@ -16,11 +33,12 @@ class Simulation:
         self.min_interactions = min_interactions
         self.max_interactions = max_interactions
 
+        # We generate each person randomly. Their characteristics and preferences are randomly generated in Person.py
         self.people = [Person(random.randint(min_friends, max_friends), person) for person in range(num_people)]
 
         self.friendships = []
 
-        # Create the like scores matrix
+        # Create the like scores matrix with shape (num_people, num_people)
         self.like_scores = self.__calculate_like_scores()
 
     # Simulates a day of people meeting each other
@@ -28,19 +46,25 @@ class Simulation:
     def simulate_day(self):
         num_new_friendships = 0
         leftover_people = []
+
+        # Add all people that do not have the max number of friends
         for person in range(self.num_people):
             if len(self.people[person].friends) < self.people[person].max_friends:
                 leftover_people.append(person)
 
+        # We don't want to accidentally prioritize people with small IDs
         random.shuffle(leftover_people)
 
         for person_idx in leftover_people:
             person = self.people[person_idx]
+
             # Skip this person if they've already met their max friends
             if len(person.friends) == person.max_friends:
                 leftover_people.remove(person_idx)
                 continue
 
+            # We sample a random number of people in the range [min_interactions, max_interactions] within the leftover
+            #   people who do not have the max number of friends yet.
             people_they_meet = random.sample(leftover_people, random.randint(min(self.min_interactions, len(leftover_people)),
                                                                              min(self.max_interactions, len(leftover_people))))
             # Loop through all people that they meet
@@ -107,12 +131,14 @@ class Simulation:
 
         return like_scores
 
+    # Creates a Networkx graph and draws the friendships between people
     def visualize_curr_friendships(self):
         friendship_graph = nx.Graph()
 
         friendship_graph.add_nodes_from(range(self.num_people))
         friendship_graph.add_edges_from(self.friendships)
 
+        # This allows us to get the most popular person and make them red
         node_and_degree = friendship_graph.degree()
         (largest_hub, degree) = sorted(node_and_degree, key=itemgetter(1))[-1]
 
@@ -120,7 +146,8 @@ class Simulation:
         # Create ego graph of main hub
         # hub_ego = nx.ego_graph(friendship_graph, largest_hub)
 
-        # Draw graph
+        # The spring layout tries to spread nodes out as far as possible away from each other,
+        #   and it makes isolated people easier to spot.
         pos = nx.spring_layout(friendship_graph)
         nx.draw(friendship_graph, pos, node_color="b", node_size=50, with_labels=False)
 
@@ -133,6 +160,9 @@ class Simulation:
         # nx.draw(friendship_graph)
         plt.show()
 
+    # Gets the labels for each person based off of their __str__. As of now, doesn't really work.
+    # We might want to redefine the __str__ method to have newlines.
+    # Also: see https://stackoverflow.com/questions/61604636/adding-tooltip-for-nodes-in-python-networkx-graph
     def __get_person_labels(self):
         labels = dict()
         for person in range(len(self.people)):
