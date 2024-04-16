@@ -2,6 +2,8 @@ from Person import Person
 import matplotlib.pyplot as plt
 import networkx as nx
 
+from operator import itemgetter
+
 import random
 
 
@@ -66,6 +68,7 @@ class Simulation:
 
         return num_new_friendships
 
+    # Calculate how much everyone likes each other based off of their characteristics and preferences
     def __calculate_like_scores(self):
         # Initialize like score matrix
         like_scores = [[0 for _ in range(self.num_people)] for _ in range(self.num_people)]
@@ -107,14 +110,39 @@ class Simulation:
     def visualize_curr_friendships(self):
         friendship_graph = nx.Graph()
 
+        friendship_graph.add_nodes_from(range(self.num_people))
         friendship_graph.add_edges_from(self.friendships)
 
-        nx.draw(friendship_graph)
+        node_and_degree = friendship_graph.degree()
+        (largest_hub, degree) = sorted(node_and_degree, key=itemgetter(1))[-1]
+
+        # print("---------\n", sorted(node_and_degree, key=itemgetter(1)))
+        # Create ego graph of main hub
+        # hub_ego = nx.ego_graph(friendship_graph, largest_hub)
+
+        # Draw graph
+        pos = nx.spring_layout(friendship_graph)
+        nx.draw(friendship_graph, pos, node_color="b", node_size=50, with_labels=False)
+
+        # Draw ego as large and red
+        options = {"node_size": 100, "node_color": "r"}
+        # print(pos.keys(), "\n", self.__get_person_labels().keys())
+        nx.draw_networkx_nodes(friendship_graph, pos, nodelist=[largest_hub], **options)
+        # nx.draw_networkx_labels(friendship_graph, pos, labels=self.__get_person_labels())
+
+        # nx.draw(friendship_graph)
         plt.show()
+
+    def __get_person_labels(self):
+        labels = dict()
+        for person in range(len(self.people)):
+            labels[person] = str(self.people[person])
+
+        return labels
 
 
 if __name__ == "__main__":
-    sim = Simulation(num_people=20)
+    sim = Simulation(num_people=50)
     for day in range(100):
         new_friends = sim.simulate_day()
         print(f"Simulated day {day}. {new_friends} new friendships made")

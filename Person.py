@@ -45,7 +45,7 @@ class Person:
     # Creates random characteristics for this person
     def __create_random_characteristics(self):
         self.characteristics = {
-            "age": 18, # random.randint(18, 50),  # Select a random age in {18, 50}
+            "age":  random.randint(18, 50),  # Select a random age in {18, 50}
             "gender": random.randint(0, 1),  # Select a random gender in {0, 1}
             "race": random.randint(0, 5),  # Select a random race out of 6 options {0, 1, 2, 3, 4, 5}
             "hobbies": set(random.sample(range(20), 4)),  # Pick four hobbies out of twenty
@@ -70,9 +70,10 @@ class Person:
 
         # Race preferences
         same_race_pref = random.random() / 20  # bonus between 0 and 0.05 for same race
+        other_race_pref = -random.random() / 20  # penalty between 0 and 0.05 for other race
         race_preferences = []
         for race in range(6):
-            race_preferences.append(same_race_pref if self.characteristics["race"] == race else 0)
+            race_preferences.append(same_race_pref if self.characteristics["race"] == race else other_race_pref)
         preferences["race"] = race_preferences
 
         # Hobby Preferences
@@ -85,4 +86,5 @@ class Person:
         return preferences
 
     def __str__(self):
-        return f"ID: {self.id} Num Friends: {len(self.friends)} "
+        return f"ID: {self.id} Num Friends: {len(self.friends)} Gender: {self.characteristics['gender']} " + \
+               f"Age: {self.characteristics['age']} Race: {self.characteristics['race']}"
