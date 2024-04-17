@@ -36,7 +36,7 @@ class Simulation:
         # We generate each person randomly. Their characteristics and preferences are randomly generated in Person.py
         self.people = [Person(random.randint(min_friends, max_friends), person) for person in range(num_people)]
 
-        self.friendships = []
+        self.friendships = set()
 
         # Create the like scores matrix with shape (num_people, num_people)
         self.like_scores = self.__calculate_like_scores()
@@ -69,6 +69,13 @@ class Simulation:
                                                                              min(self.max_interactions, len(leftover_people))))
             # Loop through all people that they meet
             for friend_candidate_idx in people_they_meet:
+
+                # Ensure they are not already friends
+                if (person_idx, friend_candidate_idx) in self.friendships:
+                    continue
+                if (friend_candidate_idx, person_idx) in self.friendships:
+                    continue
+
                 friend_candidate = self.people[friend_candidate_idx]
 
                 # See if they like each other enough
@@ -85,7 +92,7 @@ class Simulation:
                 person.friends.append(friend_candidate)
                 friend_candidate.friends.append(person)
 
-                self.friendships.append((person.id, friend_candidate.id))
+                self.friendships.add((person.id, friend_candidate.id))
                 num_new_friendships += 1
                 # TODO: We could add stuff here to boost the likelihood that a person either meets their friend's
                 #    friends or that they end up liking them
@@ -173,10 +180,12 @@ class Simulation:
 
 if __name__ == "__main__":
     sim = Simulation(num_people=50)
-    for day in range(100):
+    for day in range(14):
         new_friends = sim.simulate_day()
+        sim.visualize_curr_friendships()
         print(f"Simulated day {day}. {new_friends} new friendships made")
         # for person in sim.people:
         #     print(f'\tD{day} person {person.id}: has num friends {len(person.friends)}')
 
+    print(sim.friendships)
     sim.visualize_curr_friendships()
