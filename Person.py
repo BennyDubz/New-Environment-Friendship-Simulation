@@ -69,8 +69,8 @@ class Person:
             else [opposite_gender_pref, same_gender_pref]
 
         # Race preferences
-        same_race_pref = random.random() / 20  # bonus between 0 and 0.05 for same race
-        other_race_pref = -random.random() / 20  # penalty between 0 and 0.05 for other race
+        same_race_pref = random.random() / 3  # bonus between 0 and 0.05 for same race
+        other_race_pref = -random.random() / 5  # penalty between 0 and 0.05 for other race
         race_preferences = []
         for race in range(6):
             race_preferences.append(same_race_pref if self.characteristics["race"] == race else other_race_pref)
