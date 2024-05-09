@@ -89,5 +89,5 @@ class Person:
     #   then we could maybe adjust this to have newlines or whatever formatting is necessary. Alternatively,
     #   we can keep this and have a get_label() method.
     def __str__(self):
-        return f"ID: {self.id} Num Friends: {len(self.friends)} Gender: {self.characteristics['gender']} " + \
-               f"Age: {self.characteristics['age']} Race: {self.characteristics['race']}"
+        return f"ID: {self.id}\n\tNumber of Friends: {len(self.friends)}\n\tGender: {self.characteristics['gender']}\n\t" + \
+               f"Age: {self.characteristics['age']}\n\tRace: {self.characteristics['race']}"
