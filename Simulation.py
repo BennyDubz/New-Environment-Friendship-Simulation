@@ -77,7 +77,7 @@ class Simulation:
     video_name - The name and output directory of the video to be created. If left empty, no video will be made
     
     """
-    def run_simulation(self, num_days, video_name=""):
+    def run_simulation(self, num_days, video_name="", show_loners=False):
         image_paths = []
         for curr_day in range(num_days):
             sim.simulate_day()
@@ -85,7 +85,7 @@ class Simulation:
             if video_name:
                 curr_day_str = ("0" * (5 - len(str(curr_day)) % 5)) + str(curr_day)
                 img_path = f"img_{curr_day_str}.png"
-                self.visualize_curr_friendships(show_graph=True, save_img_path=img_path)
+                self.visualize_curr_friendships(show_graph=True, save_img_path=img_path, show_loners=show_loners)
                 image_paths.append(img_path)
 
         if video_name:
@@ -272,11 +272,14 @@ class Simulation:
         return like_scores
 
     # Creates a Networkx graph and draws the friendships between people
-    def visualize_curr_friendships(self, show_graph=True, save_img_path=""):
+    def visualize_curr_friendships(self, show_graph=True, show_loners=True, save_img_path=""):
         friendship_graph = nx.Graph()
 
-        friendship_graph.add_nodes_from(range(self.num_people))
-        friendship_graph.add_edges_from(self.friendships)
+        if show_loners:
+            friendship_graph.add_nodes_from(range(self.num_people))
+            friendship_graph.add_edges_from(self.friendships)
+        else:
+            friendship_graph.add_edges_from(self.friendships)
 
         # This allows us to get the most popular person and make them red
         node_and_degree = friendship_graph.degree()
@@ -300,6 +303,9 @@ class Simulation:
 
         colors = []
         for person in self.people:
+            if not show_loners and len(person.friends) == 0:
+                continue
+
             colors.append(color_race_map[person.characteristics["race"]])
 
         nx.draw(friendship_graph, pos, node_color=colors, node_size=50, with_labels=False)
@@ -369,7 +375,7 @@ class Simulation:
 
 
 if __name__ == "__main__":
-    sim = Simulation(num_people=50, min_interactions=3, max_interactions=5)
+    sim = Simulation(num_people=50, min_interactions=5, max_interactions=10)
     # for day in range(7):
     #     new_friends = sim.simulate_day()
     #     sim.visualize_curr_friendships(show_graph=True, save_img_path="graph.png")
@@ -377,7 +383,7 @@ if __name__ == "__main__":
     #     # for person in sim.people:
     #     #     print(f'\tD{day} person {person.id}: has num friends {len(person.friends)}')
 
-    sim.run_simulation(50, "30_days_50_people.mp4")
+    sim.run_simulation(50, "50_days_50_people.mp4", show_loners=False)
     sim.print_summary()
     # print(sim.friendships)
     # sim.visualize_curr_friendships()
