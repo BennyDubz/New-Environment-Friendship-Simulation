@@ -369,7 +369,7 @@ class Simulation:
 
 
 if __name__ == "__main__":
-    sim = Simulation(num_people=100, min_interactions=5, max_interactions=15)
+    sim = Simulation(num_people=50, min_interactions=3, max_interactions=5)
     # for day in range(7):
     #     new_friends = sim.simulate_day()
     #     sim.visualize_curr_friendships(show_graph=True, save_img_path="graph.png")
@@ -377,7 +377,7 @@ if __name__ == "__main__":
     #     # for person in sim.people:
     #     #     print(f'\tD{day} person {person.id}: has num friends {len(person.friends)}')
 
-    sim.run_simulation(10, "10_days_100_people.mp4")
+    sim.run_simulation(50, "30_days_50_people.mp4")
     sim.print_summary()
     # print(sim.friendships)
     # sim.visualize_curr_friendships()

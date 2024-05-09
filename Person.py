@@ -57,24 +57,37 @@ class Person:
 
         # Age preferences
         same_age_pref = random.random() / 20  # bonus between 0 and 0.05 for same age
-        age_diff_penalty = random.random() / 100  # penalty between 0 and 0.01 for each year of age difference
+        age_diff_penalty = random.random() / 50  # penalty between 0 and 0.01 for each year of age difference
         preferences["age"] = [same_age_pref - abs(self.characteristics["age"] - age) * age_diff_penalty
                                    for age in range(18, 51)]
 
+        # For printing out the person's preferences
+        preferences["same_age"] = "{:.3f}".format(same_age_pref)
+        preferences["age_year_diff"] = "{:.3f}".format(age_diff_penalty)
+
         # Gender preferences
         same_gender_pref = random.random() / 20  # bonus between 0 and 0.05 for same gender
-        opposite_gender_pref = (random.random() / 10) - 0.05  # modifier between -0.05 and 0.05 for opposite gender
+        opposite_gender_pref = -random.random() / 10  # penalty between 0 and 0.1 for opposite gender
         preferences["gender"] = [same_gender_pref, opposite_gender_pref] \
             if self.characteristics["gender"] == 0 \
             else [opposite_gender_pref, same_gender_pref]
 
+        # For printing out the person's preferences
+        preferences["same_gender"] = "{:.3f}".format(same_gender_pref)
+        preferences["opposite_gender"] = "{:.3f}".format(opposite_gender_pref)
+
         # Race preferences
-        same_race_pref = random.random() / 3  # bonus between 0 and 0.05 for same race
-        other_race_pref = -random.random() / 5  # penalty between 0 and 0.05 for other race
+        same_race_pref = random.random() / 3  # bonus between 0 and 0.33 for same race
+        other_race_pref = -random.random() / 5  # penalty between 0 and 0.20 for other race
         race_preferences = []
         for race in range(6):
             race_preferences.append(same_race_pref if self.characteristics["race"] == race else other_race_pref)
+
         preferences["race"] = race_preferences
+
+        # For printing out info
+        preferences["same_race"] = "{:.3f}".format(same_race_pref)
+        preferences["other_race"] = "{:.3f}".format(other_race_pref)
 
         # Hobby Preferences
         similar_hobby_pref = random.random() / 20  # bonus between 0 and 0.05 for each common hobby
@@ -83,11 +96,19 @@ class Person:
             hobby_preferences.append(similar_hobby_pref if hobby in self.characteristics["hobbies"] else 0)
         preferences["hobbies"] = hobby_preferences
 
+        # For printing the preferences
+        preferences["same_hobby"] = "{:.3f}".format(similar_hobby_pref)
+
         return preferences
 
     # A kind of lazy __str__ method. If we want to make good labels for people (on hover, ideally)
     #   then we could maybe adjust this to have newlines or whatever formatting is necessary. Alternatively,
     #   we can keep this and have a get_label() method.
     def __str__(self):
-        return f"ID: {self.id}\n\tNumber of Friends: {len(self.friends)}\n\tGender: {self.characteristics['gender']}\n\t" + \
-               f"Age: {self.characteristics['age']}\n\tRace: {self.characteristics['race']}"
+        return f"ID: {self.id}\n\tNumber of Friends: {len(self.friends)}\n\tFriend Threshold:{'{:.3f}'.format(self.friend_threshold)}\n\tGender: {self.characteristics['gender']}\n\t" + \
+               f"Age: {self.characteristics['age']}\n\tRace: {self.characteristics['race']}\n\tHobbies: {self.characteristics['hobbies']}\n\tPreferences:\n\t\t" + \
+               f"Same Gender: {self.preferences['same_gender']}\n\t\tOpposite Gender: {self.preferences['opposite_gender']}\n\t\t" + \
+               f"Same Race: {self.preferences['same_race']}\n\t\tOther Race: {self.preferences['other_race']}\n\t\t" + \
+               f"Same age bonus: {self.preferences['same_age']}\n\t\tAge penalty per year difference: {self.preferences['age_year_diff']}" + \
+               f"\n\t\tBonus per common hobby: {self.preferences['same_hobby']}"
+
