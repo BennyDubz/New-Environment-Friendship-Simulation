@@ -306,9 +306,37 @@ class Simulation:
 
         # Draw ego as large and red
         options = {"node_size": 150, "node_color": "#FF0000"}
-        nx.draw_networkx_nodes(friendship_graph, pos, nodelist=[largest_hub], **options)
+        ego = nx.draw_networkx_nodes(friendship_graph, pos, nodelist=[largest_hub], **options)
 
         # nx.draw(friendship_graph)
+
+        annot = plt.annotate("", xy=(0, 0), xytext=(20, 20), textcoords="offset points",
+                            bbox=dict(boxstyle="round", fc="w"),
+                            arrowprops=dict(arrowstyle="->"))
+        annot.set_visible(False)
+        def hover(event):
+            vis = annot.get_visible()
+            if event.inaxes == plt.gca():
+                for node, (x, y) in pos.items():
+                    contains = (x - event.xdata)**2 + (y - event.ydata)**2 <= 0.001
+                    if contains:
+                        ind = {"ind": [node]}
+                        node = ind["ind"][0]
+                        xy = pos[node]
+                        annot.xy = xy
+                        node_attr = self.__get_person_labels()[node]
+
+                        annot.set_text(node_attr)
+                        annot.set_visible(True)
+                        plt.draw()
+                        break
+                    else:
+                        if vis:
+                            annot.set_visible(False)
+                            plt.draw()
+
+        plt.gcf().canvas.mpl_connect("motion_notify_event", hover)
+
         if save_img_path:
             plt.savefig(save_img_path)
 
@@ -331,6 +359,14 @@ class Simulation:
 
         return labels
 
+    def print_summary(self):
+        print("Simulation Summary:")
+        for person in self.people:
+            print(f"Person {person.id}:")
+            print("\t", person)
+            print("\tFriends:", person.friends)
+
+
 
 if __name__ == "__main__":
     sim = Simulation(num_people=100, min_interactions=5, max_interactions=15)
@@ -342,6 +378,6 @@ if __name__ == "__main__":
     #     #     print(f'\tD{day} person {person.id}: has num friends {len(person.friends)}')
 
     sim.run_simulation(10, "10_days_100_people.mp4")
-
+    sim.print_summary()
     # print(sim.friendships)
     # sim.visualize_curr_friendships()
