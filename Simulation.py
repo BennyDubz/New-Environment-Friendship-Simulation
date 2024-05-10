@@ -169,6 +169,12 @@ class Simulation:
 
                 # They are not friends, so they could possibly become friends
 
+                # Ensure neither party is at their max friend count
+                if len(self.people[person_idx].friends) == self.people[person_idx].max_friends:
+                    continue
+                if len(person_interacted_with.friends) == person_interacted_with.max_friends:
+                    continue
+
                 # See if they like each other enough
                 person_to_candidate_score = self.like_scores[person_idx][person_interacted_with.id]
                 candidate_to_person_score = self.like_scores[person_interacted_with.id][person_idx]

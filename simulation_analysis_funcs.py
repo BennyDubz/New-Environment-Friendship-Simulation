@@ -143,7 +143,6 @@ def get_friend_group_info(simulation):
     friend_groups = nx.connected_components(friendship_graph)
     friend_total = 0
     for friend_group in friend_groups:
-        print(friend_group)
         friend_total += len(friend_group)
 
     # Ensure no divide by 0
@@ -157,7 +156,7 @@ def get_friend_group_info(simulation):
 
 def get_connectedness_info(simulation):
     """
-    Gets information on the connectedness of people in the **largest connected component**
+    Gets information on the connectedness of people in the **largest connected component** (friend group)
 
     Returns a dictionary with the following keys/info:
 
@@ -173,7 +172,7 @@ def get_connectedness_info(simulation):
      min_avg_deg_sep_person --> the person object for the min_avg_deg_of_sep
                                    aka the "most well connected" person
 
-     max_distance --> the farthest away two people are from eachother
+     max_distance --> the farthest away two people are from each other
 
     """
 
@@ -239,8 +238,8 @@ def get_connectedness_info(simulation):
 
 
 if __name__ == "__main__":
-    sim = Simulation(num_people=100)
-    sim.run_simulation(num_days=10)
+    sim = Simulation(num_people=100, max_friends=50)
+    sim.run_simulation(num_days=20)
 
     # loner_stats = get_loner_statistics(sim)
     # for key in loner_stats.keys():
@@ -251,7 +250,9 @@ if __name__ == "__main__":
     #     sim.simulate_day()
     #     friend_group_info = get_friend_group_info(sim)
     #     print(f"Day {day}, friend_group_info {friend_group_info}")
-
-    res = get_connectedness_info(sim)
-    print(res)
+    print(get_loner_statistics(sim))
+    print("-------------")
+    print(get_friend_group_info(sim))
+    print("-------------")
+    print(get_connectedness_info(sim))
     sim.visualize_curr_friendships(show_loners=False)
