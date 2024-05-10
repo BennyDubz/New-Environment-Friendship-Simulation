@@ -62,8 +62,8 @@ class Person:
                                    for age in range(18, 51)]
 
         # For printing out the person's preferences
-        preferences["same_age"] = "{:.3f}".format(same_age_pref)
-        preferences["age_year_diff"] = "{:.3f}".format(age_diff_penalty)
+        preferences["same_age"] = float("{:.3f}".format(same_age_pref))
+        preferences["age_year_diff"] = float("{:.3f}".format(age_diff_penalty))
 
         # Gender preferences
         same_gender_pref = random.random() / 20  # bonus between 0 and 0.05 for same gender
@@ -73,8 +73,8 @@ class Person:
             else [opposite_gender_pref, same_gender_pref]
 
         # For printing out the person's preferences
-        preferences["same_gender"] = "{:.3f}".format(same_gender_pref)
-        preferences["opposite_gender"] = "{:.3f}".format(opposite_gender_pref)
+        preferences["same_gender"] = float("{:.3f}".format(same_gender_pref))
+        preferences["opposite_gender"] = float("{:.3f}".format(opposite_gender_pref))
 
         # Race preferences
         same_race_pref = random.random() / 3  # bonus between 0 and 0.33 for same race
@@ -86,8 +86,8 @@ class Person:
         preferences["race"] = race_preferences
 
         # For printing out info
-        preferences["same_race"] = "{:.3f}".format(same_race_pref)
-        preferences["other_race"] = "{:.3f}".format(other_race_pref)
+        preferences["same_race"] = float("{:.3f}".format(same_race_pref))
+        preferences["other_race"] = float("{:.3f}".format(other_race_pref))
 
         # Hobby Preferences
         similar_hobby_pref = random.random() / 20  # bonus between 0 and 0.05 for each common hobby
@@ -97,7 +97,7 @@ class Person:
         preferences["hobbies"] = hobby_preferences
 
         # For printing the preferences
-        preferences["same_hobby"] = "{:.3f}".format(similar_hobby_pref)
+        preferences["same_hobby"] = float("{:.3f}".format(similar_hobby_pref))
 
         return preferences
 

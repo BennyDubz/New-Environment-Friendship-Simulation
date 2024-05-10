@@ -80,7 +80,7 @@ class Simulation:
     def run_simulation(self, num_days, video_name="", show_loners=False):
         image_paths = []
         for curr_day in range(num_days):
-            sim.simulate_day()
+            self.simulate_day()
 
             if video_name:
                 curr_day_str = ("0" * (5 - len(str(curr_day)) % 5)) + str(curr_day)
