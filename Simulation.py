@@ -18,6 +18,9 @@ import random
 # For more efficient matrix and random operations
 import numpy as np
 
+# For analysis functions
+import simulation_analysis_funcs
+
 # To create directories and delete unwanted files
 import os
 import subprocess
@@ -62,6 +65,10 @@ class Simulation:
         # Initialize friendship set of tuples (friend_id_1, friend_id_2)
         self.friendships = set()
 
+        # Initialize array of unique friend groups over time
+        self.num_disjoint_groups = []
+        self.avg_degrees_of_separation = []
+
         # Start between 0 and 0.8 for how much person_1 likes person_2 (consider this the personality modifier)
         initial_score_range = (0.3, 0.9)
 
@@ -79,8 +86,15 @@ class Simulation:
     """
     def run_simulation(self, num_days, video_name="", show_loners=False):
         image_paths = []
+
         for curr_day in range(num_days):
             self.simulate_day()
+
+            friend_group_info = simulation_analysis_funcs.get_friend_group_info(sim)
+            connectedness_info = simulation_analysis_funcs.get_connectedness_info(sim)
+
+            self.num_disjoint_groups.append(friend_group_info["num_fgs"])
+            self.avg_degrees_of_separation.append(connectedness_info["avg_avg_deg_sep"])
 
             if video_name:
                 curr_day_str = ("0" * (5 - len(str(curr_day)) % 5)) + str(curr_day)
@@ -361,6 +375,35 @@ class Simulation:
             # timer.add_callback(close_plot_event)
             plt.show()
 
+    def visualize_analysis(self):
+        """
+        Plot simulation results.
+        """
+        time_steps = list(range(1, len(self.num_disjoint_groups) + 1))
+
+        # Plotting the number of disjoint friend groups over time
+        plt.figure(figsize=(10, 5))
+        plt.plot(time_steps, self.num_disjoint_groups, marker='o', color='b', label='Number of Friend Groups')
+        plt.xlabel('Time Steps')
+        plt.ylabel('Number of Unique Friend Groups')
+        plt.title('Number of Disjoint Friend Groups Over Time')
+        plt.legend()
+        plt.grid(True)
+        # plt.show()
+        plt.savefig("disjoint_friend_groups_over_time.png")
+
+        # Plotting the average degrees of separation over time
+        plt.figure(figsize=(10, 5))
+        plt.plot(time_steps, self.avg_degrees_of_separation, marker='o', color='r',
+                 label='Average Degrees of Separation')
+        plt.xlabel('Time Steps')
+        plt.ylabel('Average Degrees of Separation')
+        plt.title('Average Degrees of Separation Over Time')
+        plt.legend()
+        plt.grid(True)
+        # plt.show()
+        plt.savefig("avg_degrees_of_separation.png")
+
     # Gets the labels for each person based off of their __str__. As of now, doesn't really work.
     # We might want to redefine the __str__ method to have newlines.
     # Also: see https://stackoverflow.com/questions/61604636/adding-tooltip-for-nodes-in-python-networkx-graph
@@ -371,12 +414,27 @@ class Simulation:
 
         return labels
 
-    def print_summary(self):
-        print("Simulation Summary:")
-        for person in self.people:
-            print(f"Person {person.id}:")
-            print("\t", person)
-            print("\tFriends:", person.friends)
+    def create_summary(self):
+        with open("simulation_summary.txt", "w") as file:
+            print("Simulation Summary:", file=file)
+            for person in self.people:
+                print(f"Person {person.id}:", file=file)
+                print("\t", person, file=file)
+                print("\tFriends:", person.friends, file=file)
+
+    def create_analysis(self):
+        with open("simulation_analysis.txt", "w") as file:
+            i = 1
+            print("Simulation Analysis:", file=file)
+            print("\tUnique Friend Groups Over Time:", file=file)
+            for number in self.num_disjoint_groups:
+                print(f"\t\tDay {i}: {number}", file=file)
+                i = i + 1
+            i = 1
+            print("\tAverage Degrees of Seperation Over Time:", file=file)
+            for number in self.avg_degrees_of_separation:
+                print(f"\t\tDay {i}: {number}", file=file)
+                i = i + 1
 
 
 
@@ -390,6 +448,8 @@ if __name__ == "__main__":
     #     #     print(f'\tD{day} person {person.id}: has num friends {len(person.friends)}')
 
     sim.run_simulation(50, "50_days_50_people.mp4", show_loners=False)
-    sim.print_summary()
+    sim.visualize_analysis()
+    sim.create_summary()
+    sim.create_analysis()
     # print(sim.friendships)
     # sim.visualize_curr_friendships()
