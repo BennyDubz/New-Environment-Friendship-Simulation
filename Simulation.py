@@ -66,6 +66,7 @@ class Simulation:
         self.friendships = set()
 
         # Initialize array of unique friend groups over time
+        self.avg_friends = []
         self.num_disjoint_groups = []
         self.avg_degrees_of_separation = []
 
@@ -93,6 +94,7 @@ class Simulation:
             friend_group_info = simulation_analysis_funcs.get_friend_group_info(sim)
             connectedness_info = simulation_analysis_funcs.get_connectedness_info(sim)
 
+            self.avg_friends.append(connectedness_info["avg_friends"])
             self.num_disjoint_groups.append(friend_group_info["num_fgs"])
             self.avg_degrees_of_separation.append(connectedness_info["avg_avg_deg_sep"])
 
@@ -383,6 +385,17 @@ class Simulation:
 
         # Plotting the number of disjoint friend groups over time
         plt.figure(figsize=(10, 5))
+        plt.plot(time_steps, self.avg_friends, marker='o', color='b', label='Number of Friends')
+        plt.xlabel('Time Steps')
+        plt.ylabel('Average Number of Friends')
+        plt.title('Average Number of Friends over Time')
+        plt.legend()
+        plt.grid(True)
+        # plt.show()
+        plt.savefig("avg_friends_over_time.png")
+
+        # Plotting the number of disjoint friend groups over time
+        plt.figure(figsize=(10, 5))
         plt.plot(time_steps, self.num_disjoint_groups, marker='o', color='b', label='Number of Friend Groups')
         plt.xlabel('Time Steps')
         plt.ylabel('Number of Unique Friend Groups')
@@ -426,6 +439,10 @@ class Simulation:
         with open("simulation_analysis.txt", "w") as file:
             i = 1
             print("Simulation Analysis:", file=file)
+            print("\tAverage Number of Friends Over Time:", file=file)
+            for number in self.avg_friends:
+                print(f"\t\tDay {i}: {number}", file=file)
+                i = i + 1
             print("\tUnique Friend Groups Over Time:", file=file)
             for number in self.num_disjoint_groups:
                 print(f"\t\tDay {i}: {number}", file=file)
