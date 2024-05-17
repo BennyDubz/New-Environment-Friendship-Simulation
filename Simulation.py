@@ -59,16 +59,13 @@ class Simulation:
 
         ### Initializations ###
 
+        self.time_steps = 50
+
         # We generate each person randomly. Their characteristics and preferences are randomly generated in Person.py
         self.people = [Person(random.randint(min_friends, max_friends), person) for person in range(num_people)]
 
         # Initialize friendship set of tuples (friend_id_1, friend_id_2)
         self.friendships = set()
-
-        # Initialize array of unique friend groups over time
-        self.avg_friends = []
-        self.num_disjoint_groups = []
-        self.avg_degrees_of_separation = []
 
         # Start between 0 and 0.8 for how much person_1 likes person_2 (consider this the personality modifier)
         initial_score_range = (0.3, 0.9)
@@ -85,18 +82,38 @@ class Simulation:
     video_name - The name and output directory of the video to be created. If left empty, no video will be made
     
     """
-    def run_simulation(self, num_days, video_name="", show_loners=False):
+    def run_simulation(self, num_days, video_name="", show_loners=False, produce_analytics=False):
         image_paths = []
+
+        created = False
+
+        # if len(self.friendships) > 0:
+        #     statistics_over_time = {key: [] for key in simulation_analysis_funcs.get_loner_statistics(self).keys()}
+        #     statistics_over_time.update({key: [] for key in simulation_analysis_funcs.get_friend_group_info(self).keys()})
+        #     statistics_over_time.update({key: [] for key in simulation_analysis_funcs.get_connectedness_info(self).keys()})
 
         for curr_day in range(num_days):
             self.simulate_day()
 
-            friend_group_info = simulation_analysis_funcs.get_friend_group_info(sim)
-            connectedness_info = simulation_analysis_funcs.get_connectedness_info(sim)
+            if created == False:
+                statistics_over_time = {key: [] for key in simulation_analysis_funcs.get_loner_statistics(self).keys()}
+                statistics_over_time.update(
+                    {key: [] for key in simulation_analysis_funcs.get_friend_group_info(self).keys()})
+                statistics_over_time.update(
+                    {key: [] for key in simulation_analysis_funcs.get_connectedness_info(self).keys()})
+                created = True
 
-            self.avg_friends.append(connectedness_info["avg_friends"])
-            self.num_disjoint_groups.append(friend_group_info["num_fgs"])
-            self.avg_degrees_of_separation.append(connectedness_info["avg_avg_deg_sep"])
+            if produce_analytics and len(self.friendships) > 1:
+
+                friend_group_info = simulation_analysis_funcs.get_friend_group_info(sim)
+                connectedness_info = simulation_analysis_funcs.get_connectedness_info(sim)
+
+                for key, value in friend_group_info.items():
+                    statistics_over_time[key].append(value)
+                    self.time_steps = len(statistics_over_time[key])
+
+                for key, value in connectedness_info.items():
+                    statistics_over_time[key].append(value)
 
             if video_name:
                 curr_day_str = ("0" * (5 - len(str(curr_day)) % 5)) + str(curr_day)
@@ -117,7 +134,7 @@ class Simulation:
 
     # Simulates a day of people meeting each other
     # Return - Number of new friendships made
-    def simulate_day(self):
+    def simulate_day(self, analytics=False):
         num_new_friendships = 0
         # leftover_people = []
 
@@ -417,6 +434,40 @@ class Simulation:
         # plt.show()
         plt.savefig("avg_degrees_of_separation.png")
 
+    def get_analytics(self, sim_x, num_days, output_dir="analytics"):
+        """
+        Generate and save analytics plots for the simulation.
+
+        Parameters:
+            sim_x (Simulation): The simulation object.
+            num_days (int): The number of days to run the simulation for.
+            output_dir (str): The directory to save the analytics plots. Default is "analytics".
+        """
+
+        new_time_steps = list(range(1, self.time_steps + 1))
+
+        # Create output directory if it doesn't exist
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Run the simulation
+        sim_x.run_simulation(num_days, produce_analytics=True)
+
+        # Get statistics over time
+        loner_stats_over_time = simulation_analysis_funcs.get_loner_statistics(sim_x)
+        friend_group_info_over_time = simulation_analysis_funcs.get_friend_group_info(sim_x)
+        connectedness_info_over_time = simulation_analysis_funcs.get_connectedness_info(sim_x)
+
+        # Plot and save each statistic
+        for key, values in connectedness_info_over_time.items():
+            plt.figure()
+            plt.plot(new_time_steps, values, marker='o')
+            plt.xlabel('Day')
+            plt.ylabel(key)
+            plt.title(f'{key} Over Time')
+            plt.grid(True)
+            plt.savefig(os.path.join(output_dir, f'{key}.png'))
+            plt.close()
+
     # Gets the labels for each person based off of their __str__. As of now, doesn't really work.
     # We might want to redefine the __str__ method to have newlines.
     # Also: see https://stackoverflow.com/questions/61604636/adding-tooltip-for-nodes-in-python-networkx-graph
@@ -464,9 +515,11 @@ if __name__ == "__main__":
     #     # for person in sim.people:
     #     #     print(f'\tD{day} person {person.id}: has num friends {len(person.friends)}')
 
-    sim.run_simulation(50, "50_days_50_people.mp4", show_loners=False)
-    sim.visualize_analysis()
-    sim.create_summary()
-    sim.create_analysis()
+    # sim.run_simulation(50, "50_days_50_people.mp4", show_loners=False)
+    # sim.visualize_analysis()
+    # sim.create_summary()
+    # sim.create_analysis()
     # print(sim.friendships)
     # sim.visualize_curr_friendships()
+
+    sim.get_analytics(sim, 50)
