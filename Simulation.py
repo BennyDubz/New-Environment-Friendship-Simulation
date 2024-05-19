@@ -18,6 +18,9 @@ import random
 # For more efficient matrix and random operations
 import numpy as np
 
+# For analysis functions
+import simulation_analysis_funcs
+
 # To create directories and delete unwanted files
 import os
 import subprocess
@@ -56,6 +59,36 @@ class Simulation:
 
         ### Initializations ###
 
+        self.time_steps = 50
+
+        self.connectedness_dict = {
+            "avg_friends": ([], "Average Friends"),
+            "avg_avg_deg_sep": ([], "Average Average Degree of Separation"),
+            "max_avg_deg_sep": ([], "Maximum Average Degree of Separation"),
+            "min_avg_deg_sep": ([], "Minimum Average Degree of Separation"),
+            # "min_avg_deg_sep_person": ([], "Person with Minimum Average Degree of Separation"),
+            "max_distance": ([], "Maximum Distance between Two People")
+        }
+
+        self.friend_group_dict = {
+            "num_fgs": ([], "Number of Disconnected Friend Groups"),
+            "avg_fg_size": ([], "Average Size of Each Friend Group")
+        }
+
+        self.loner_dict = {
+            "total_loners": ([], "Total Loners"),
+            "avg_friend_threshold": ([], "Average Friend Threshold"),
+            "age_distribution": ([], "Age Distribution"),
+            "race_distribution": ([], "Race Distribution"),
+            "avg_same_race_pref": ([], "Average Same Race Preference"),
+            "avg_other_race_pref": ([], "Average Other Race Preference"),
+            "avg_same_gender_pref": ([], "Average Same Gender Preference"),
+            "avg_other_gender_pref": ([], "Average Other Gender Preference"),
+            "avg_same_age_pref": ([], "Average Same Age Preference"),
+            "avg_age_diff_pref": ([], "Average Age Difference Preference"),
+            "avg_same_hobby_pref": ([], "Average Same Hobby Preference")
+        }
+
         # We generate each person randomly. Their characteristics and preferences are randomly generated in Person.py
         self.people = [Person(random.randint(min_friends, max_friends), person) for person in range(num_people)]
 
@@ -77,10 +110,26 @@ class Simulation:
     video_name - The name and output directory of the video to be created. If left empty, no video will be made
     
     """
-    def run_simulation(self, num_days, video_name="", show_loners=False):
+    def run_simulation(self, num_days, video_name="", show_loners=False, produce_analytics=False):
         image_paths = []
+
         for curr_day in range(num_days):
             self.simulate_day()
+
+            if produce_analytics and len(self.friendships) > 1:
+
+                friend_group_info = simulation_analysis_funcs.get_friend_group_info(sim)
+                connectedness_info = simulation_analysis_funcs.get_connectedness_info(sim)
+                loner_info = simulation_analysis_funcs.get_loner_statistics(sim)
+
+                for key, value in self.connectedness_dict.items():
+                    self.connectedness_dict[key][0].append(connectedness_info[key])
+
+                for key, value in self.friend_group_dict.items():
+                    self.friend_group_dict[key][0].append(friend_group_info[key])
+
+                for key, value in self.loner_dict.items():
+                    self.loner_dict[key][0].append(loner_info[key])
 
             if video_name:
                 curr_day_str = ("0" * (5 - len(str(curr_day)) % 5)) + str(curr_day)
@@ -101,7 +150,7 @@ class Simulation:
 
     # Simulates a day of people meeting each other
     # Return - Number of new friendships made
-    def simulate_day(self):
+    def simulate_day(self, analytics=False):
         num_new_friendships = 0
         # leftover_people = []
 
@@ -361,6 +410,59 @@ class Simulation:
             # timer.add_callback(close_plot_event)
             plt.show()
 
+    def get_analytics(self, sim_x, num_days, output_dir="analytics"):
+        """
+        Generate and save analytics plots for the simulation.
+
+        Parameters:
+            sim_x (Simulation): The simulation object.
+            num_days (int): The number of days to run the simulation for.
+            output_dir (str): The directory to save the analytics plots. Default is "analytics".
+        """
+
+        # Create output directory if it doesn't exist
+        os.makedirs(output_dir, exist_ok=True)
+        os.makedirs(output_dir + "/connectedness", exist_ok=True)
+        os.makedirs(output_dir + "/friend_group", exist_ok=True)
+        os.makedirs(output_dir + "/loners", exist_ok=True)
+
+        # Run the simulation
+        sim_x.run_simulation(num_days, produce_analytics=True)
+
+        time_steps = list(range(1, len(self.connectedness_dict["avg_friends"][0]) + 1))
+
+        for key, value in self.connectedness_dict.items():
+            plt.figure(figsize=(10, 5))
+            plt.plot(time_steps, self.connectedness_dict[key][0], marker='o', color='b', label='Number of Friend Groups')
+            plt.xlabel('Time Steps')
+            plt.ylabel(self.connectedness_dict[key][1])
+            plt.title(self.connectedness_dict[key][1] + " Over Time")
+            plt.legend()
+            plt.grid(True)
+            plt.savefig(os.path.join(output_dir + "/connectedness", f'{key}.png'))
+
+        for key, value in self.friend_group_dict.items():
+            plt.figure(figsize=(10, 5))
+            plt.plot(time_steps, self.friend_group_dict[key][0], marker='o', color='b', label='Number of Friend Groups')
+            plt.xlabel('Time Steps')
+            plt.ylabel(self.friend_group_dict[key][1])
+            plt.title(self.friend_group_dict[key][1] + " Over Time")
+            plt.legend()
+            plt.grid(True)
+            plt.savefig(os.path.join(output_dir + "/friend_group", f'{key}.png'))
+
+        for key, value in self.loner_dict.items():
+            plt.figure(figsize=(10, 5))
+            plt.plot(time_steps, self.loner_dict[key][0], marker='o', color='b', label='Number of Friend Groups')
+            plt.xlabel('Time Steps')
+            plt.ylabel(self.loner_dict[key][1])
+            plt.title(self.loner_dict[key][1] + " Over Time")
+            plt.legend()
+            plt.grid(True)
+            plt.savefig(os.path.join(output_dir + "/loners", f'{key}.png'))
+
+        sim.print_analysis()
+
     # Gets the labels for each person based off of their __str__. As of now, doesn't really work.
     # We might want to redefine the __str__ method to have newlines.
     # Also: see https://stackoverflow.com/questions/61604636/adding-tooltip-for-nodes-in-python-networkx-graph
@@ -371,13 +473,36 @@ class Simulation:
 
         return labels
 
-    def print_summary(self):
-        print("Simulation Summary:")
-        for person in self.people:
-            print(f"Person {person.id}:")
-            print("\t", person)
-            print("\tFriends:", person.friends)
+    def create_summary(self):
+        with open("simulation_summary.txt", "w") as file:
+            print("Simulation Summary:", file=file)
+            for person in self.people:
+                print(f"Person {person.id}:", file=file)
+                print("\t", person, file=file)
+                print("\tFriends:", person.friends, file=file)
 
+    def print_analysis(self):
+        with open("simulation_analysis.txt", "w") as file:
+            i = 1
+            print("Simulation Analysis:", file=file)
+            for key, value in self.connectedness_dict.items():
+                print(value[1] + " Over Time", file=file)
+                for number in value[0]:
+                    print(f"\t\tDay {i}: {number}", file=file)
+                    i = i + 1
+                i = 1
+            for key, value in self.friend_group_dict.items():
+                print(value[1] + " Over Time", file=file)
+                for number in value[0]:
+                    print(f"\t\tDay {i}: {number}", file=file)
+                    i = i + 1
+                i = 1
+            for key, value in self.loner_dict.items():
+                print(value[1] + " Over Time", file=file)
+                for number in value[0]:
+                    print(f"\t\tDay {i}: {number}", file=file)
+                    i = i + 1
+                i = 1
 
 
 if __name__ == "__main__":
@@ -389,7 +514,11 @@ if __name__ == "__main__":
     #     # for person in sim.people:
     #     #     print(f'\tD{day} person {person.id}: has num friends {len(person.friends)}')
 
-    sim.run_simulation(50, "50_days_50_people.mp4", show_loners=False)
-    sim.print_summary()
+    # sim.run_simulation(50, "50_days_50_people.mp4", show_loners=False)
+    # sim.visualize_analysis()
+    # sim.create_summary()
+    # sim.create_analysis()
     # print(sim.friendships)
     # sim.visualize_curr_friendships()
+
+    sim.get_analytics(sim, 50)
