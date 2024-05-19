@@ -61,6 +61,20 @@ class Simulation:
 
         self.time_steps = 50
 
+        self.connectedness_dict = {
+            "avg_friends": ([], "Average Friends"),
+            "avg_avg_deg_sep": ([], "Average Average Degree of Separation"),
+            "max_avg_deg_sep": ([], "Maximum Average Degree of Separation"),
+            "min_avg_deg_sep": ([], "Minimum Average Degree of Separation"),
+            "min_avg_deg_sep_person": ([], "Person with Minimum Average Degree of Separation"),
+            "max_distance": ([], "Maximum Distance between Two People")
+        }
+
+        self.friend_group_dict = {
+            "num_fgs": ([], "Number of Disconnected Friend Groups"),
+            "avg_fg_size": ([], "Average Size of Each Friend Group")
+        }
+
         # We generate each person randomly. Their characteristics and preferences are randomly generated in Person.py
         self.people = [Person(random.randint(min_friends, max_friends), person) for person in range(num_people)]
 
@@ -87,11 +101,6 @@ class Simulation:
 
         created = False
 
-        # if len(self.friendships) > 0:
-        #     statistics_over_time = {key: [] for key in simulation_analysis_funcs.get_loner_statistics(self).keys()}
-        #     statistics_over_time.update({key: [] for key in simulation_analysis_funcs.get_friend_group_info(self).keys()})
-        #     statistics_over_time.update({key: [] for key in simulation_analysis_funcs.get_connectedness_info(self).keys()})
-
         for curr_day in range(num_days):
             self.simulate_day()
 
@@ -108,12 +117,21 @@ class Simulation:
                 friend_group_info = simulation_analysis_funcs.get_friend_group_info(sim)
                 connectedness_info = simulation_analysis_funcs.get_connectedness_info(sim)
 
-                for key, value in friend_group_info.items():
-                    statistics_over_time[key].append(value)
-                    self.time_steps = len(statistics_over_time[key])
+                for key, value in self.connectedness_dict.items():
+                    self.connectedness_dict[key][0].append(connectedness_info[key])
 
-                for key, value in connectedness_info.items():
-                    statistics_over_time[key].append(value)
+                for key, value in self.friend_group_dict.items():
+                    self.friend_group_dict[key][0].append(friend_group_info[key])
+
+                # friend_group_info = simulation_analysis_funcs.get_friend_group_info(sim)
+                # connectedness_info = simulation_analysis_funcs.get_connectedness_info(sim)
+                #
+                # for key, value in friend_group_info.items():
+                #     statistics_over_time[key].append(value)
+                #     self.time_steps = len(statistics_over_time[key])
+                #
+                # for key, value in connectedness_info.items():
+                #     statistics_over_time[key].append(value)
 
             if video_name:
                 curr_day_str = ("0" * (5 - len(str(curr_day)) % 5)) + str(curr_day)
@@ -444,7 +462,7 @@ class Simulation:
             output_dir (str): The directory to save the analytics plots. Default is "analytics".
         """
 
-        new_time_steps = list(range(1, self.time_steps + 1))
+        time_steps = list(range(1, len(self.connectedness_dict["avg_friends"][0]) + 1))
 
         # Create output directory if it doesn't exist
         os.makedirs(output_dir, exist_ok=True)
@@ -452,21 +470,16 @@ class Simulation:
         # Run the simulation
         sim_x.run_simulation(num_days, produce_analytics=True)
 
-        # Get statistics over time
-        loner_stats_over_time = simulation_analysis_funcs.get_loner_statistics(sim_x)
-        friend_group_info_over_time = simulation_analysis_funcs.get_friend_group_info(sim_x)
-        connectedness_info_over_time = simulation_analysis_funcs.get_connectedness_info(sim_x)
-
-        # Plot and save each statistic
-        for key, values in connectedness_info_over_time.items():
-            plt.figure()
-            plt.plot(new_time_steps, values, marker='o')
-            plt.xlabel('Day')
-            plt.ylabel(key)
-            plt.title(f'{key} Over Time')
+        for key, value in self.connectedness_dict.items():
+            plt.figure(figsize=(10, 5))
+            plt.plot(time_steps, self.connectedness_dict[key][0], marker='o', color='b', label='Number of Friend Groups')
+            plt.xlabel('Time Steps')
+            plt.ylabel(self.connectedness_dict[key][1])
+            plt.title(self.connectedness_dict[key][1] + " Over Time")
+            plt.legend()
             plt.grid(True)
-            plt.savefig(os.path.join(output_dir, f'{key}.png'))
-            plt.close()
+            # plt.show()
+            plt.savefig(key + ".png")
 
     # Gets the labels for each person based off of their __str__. As of now, doesn't really work.
     # We might want to redefine the __str__ method to have newlines.
