@@ -4,6 +4,8 @@
 import networkx as nx
 from Simulation import Simulation
 import numpy as np
+import os
+import matplotlib.pyplot as plt
 
 
 def get_loners(simulation):
@@ -166,6 +168,9 @@ def get_connectedness_info(simulation):
 
      max_avg_deg_sep --> the maximum distance avg degree of separation for a person from everyone else
 
+     max_avg_deg_sep_person --> the person object for the max_avg_deg_of_sep
+                                   aka the "least well connected" person that is still in the big group
+
      min_avg_deg_sep --> the minimum average degree of separation for a person from everyone else
                             aka the "most well connected" stat
 
@@ -191,6 +196,7 @@ def get_connectedness_info(simulation):
     max_avg_deg = 0
     min_avg_deg = np.inf
     min_avg_deg_person = None
+    max_avg_deg_person = None
     max_distance = 0
 
     # The slow part - looping through a bfs on each person
@@ -220,6 +226,7 @@ def get_connectedness_info(simulation):
         # See if this is the largest separation
         if individual_avg_separation > max_avg_deg:
             max_avg_deg = individual_avg_separation
+            max_avg_deg_person = simulation.people[person_id]
 
         # See if this is the minimum separation
         if individual_avg_separation < min_avg_deg:
@@ -232,9 +239,217 @@ def get_connectedness_info(simulation):
     results["min_avg_deg_sep"] = float("{:.3f}".format(min_avg_deg))
     results["min_avg_deg_sep_person"] = min_avg_deg_person
     results["max_avg_deg_sep"] = float("{:.3f}".format(max_avg_deg))
+    results["max_avg_deg_sep_person"] = max_avg_deg_person
     results["max_distance"] = max_distance
 
     return results
+
+
+def get_individual_statistics(person):
+    """
+    Takes a person object and returns a dictionary containing information on their characteristics and preferences
+
+    Returns a dictionary with the following keys:
+
+        age --> the age of the person
+
+        friend_threshold --> the friend threshold of the person
+
+        num_friends --> the number of friends the person has
+
+        same_race_pref --> the same-race preference of the person
+
+        other_race_pref --> the other-race preference of the person
+
+        same_gender_pref --> the same-gender preference of the person
+
+        opposite_gender_pref --> the opposite-gender preference of the person
+
+        same_age_pref --> the same age preference of the person
+
+        age_diff_pref --> the preference/penalty for each year of age difference this person has when making friends
+
+        same_hobby_pref --> the common hobby preference of the person
+
+    """
+
+    person_info = dict()
+
+    person_info["age"] = person.characteristics["age"]
+    person_info["friend_threshold"] = person.friend_threshold
+    person_info["num_friends"] = len(person.friends)
+    person_info["same_race_pref"] = person.preferences["same_race"]
+    person_info["other_race_pref"] = person.preferences["other_race"]
+    person_info["same_gender_pref"] = person.preferences["same_gender"]
+    person_info["opposite_gender_pref"] = person.preferences["opposite_gender"]
+    person_info["same_age_pref"] = person.preferences["same_age"]
+    person_info["age_diff_pref"] = person.preferences["age_year_diff"]
+    person_info["same_hobby_pref"] = person.preferences["same_hobby"]
+
+    return person_info
+
+def get_empty_analysis_dicts():
+    """
+    Initializes and returns a dictionary of empty dictionaries needed to gather all of the statistics from a simulation
+
+    Returns a dictionary with the following keys:
+
+        connectedness_dict --> based off of the get_connectedness_info function
+
+        friend_group_dict --> based off of the get_friend_group_info function
+
+        loner_dict --> based off of the get_loner_statistics function
+
+        most_connected_dict --> to fetch information from the most connected person -
+                                    get this from the get_connectedness_info function
+
+        least_connected_dict --> to fetch information from the least connected person -
+                                    get this from the get_connectedness_info function
+
+    """
+    connectedness_dict = {
+        "new_friendships_made": ([], "New Friendships Made", "Number of New Friendships"),
+        "avg_friends": ([], "Average Friends", "Number of Friends"),
+        "avg_avg_deg_sep": ([], "Average Average Degree of Separation", "Degree of Separation"),
+        "max_avg_deg_sep": ([], "Maximum Average Degree of Separation", "Degree of Separation"),
+        "min_avg_deg_sep": ([], "Minimum Average Degree of Separation", "Degree of Separation"),
+        # "min_avg_deg_sep_person": ([], "Person with Minimum Average Degree of Separation"),
+        "max_distance": ([], "Maximum Distance between Two People", "Distance")
+    }
+
+    friend_group_dict = {
+        "num_fgs": ([], "Number of Disconnected Friend Groups", "Number of Friend Groups"),
+        "avg_fg_size": ([], "Average Size of Each Friend Group", "Size of Friend Group")
+    }
+
+    loner_dict = {
+        "total_loners": ([], "Total Loners", "Number of People"),
+        "avg_friend_threshold": ([], "Average Friend Threshold", "Friend Threshold"),
+        "age_distribution": ([], "Age Distribution", "Age"),
+        "race_distribution": ([], "Race Distribution", "Amount per Race"),
+        "avg_same_race_pref": ([], "Average Same Race Preference", "Same Race Preference"),
+        "avg_other_race_pref": ([], "Average Other Race Preference", "Other Race Preference"),
+        "avg_same_gender_pref": ([], "Average Same Gender Preference", "Same Gender Preference"),
+        "avg_other_gender_pref": ([], "Average Other Gender Preference", "Other Gender Preference"),
+        "avg_same_age_pref": ([], "Average Same Age Preference", "Same Age Preference"),
+        "avg_age_diff_pref": ([], "Average Age Difference Preference", "Age Difference Preference"),
+        "avg_same_hobby_pref": ([], "Average Same Hobby Preference", "Same Hobby Preference")
+    }
+
+    most_connected_dict = {
+        "age": ([], "Age of Most Connected Person", "Age"),
+        "friend_threshold": ([], "Friend Threshold of Most Connected Person", "Common Hobby Preference"),
+        "num_friends": ([], "Number of Friends of Most Connected Person", "Common Hobby Preference"),
+        "same_race_pref": ([], "Same Race Preference of Most Connected Person", "Same Race Preference"),
+        "other_race_pref": ([], "Other Race Preference of Most Connected Person", "Other Race Preference"),
+        "same_gender_pref": ([], "Same Gender Preference of Most Connected Person", "Same Race Preference"),
+        "opposite_gender_pref": ([], "Opposite Gender Penalty of Most Connected Person", "Opposite Gender Penalty"),
+        "same_age_pref": ([], "Same Age Preference of Most Connected Person", "Same Age Preference"),
+        "age_diff_pref": ([], "Age Difference (per year) Penalty of Most Connected Person", "Age Difference Penalty"),
+        "same_hobby_pref": ([], "Common Hobby Preference of Most Connected Person", "Common Hobby Preference"),
+    }
+
+    least_connected_dict = {
+        "age": ([], "Age of Least Connected Person", "Age"),
+        "friend_threshold": ([], "Friend Threshold of Least Connected Person", "Common Hobby Preference"),
+        "num_friends": ([], "Number of Friends of Least Connected Person", "Common Hobby Preference"),
+        "same_race_pref": ([], "Same Race Preference of Least Connected Person", "Same Race Preference"),
+        "other_race_pref": ([], "Other Race Preference of Least Connected Person", "Other Race Preference"),
+        "same_gender_pref": ([], "Same Gender Preference of Least Connected Person", "Same Race Preference"),
+        "opposite_gender_pref": ([], "Opposite Gender Preference of Least Connected Person", "Opposite Gender Preference"),
+        "same_age_pref": ([], "Same Age Preference of Least Connected Person", "Same Age Preference"),
+        "age_diff_pref": ([], "Age Difference (per year) Penalty of Least Connected Person", "Age Difference Penalty"),
+        "same_hobby_pref": ([], "Common Hobby Preference of Least Connected Person", "Common Hobby Preference"),
+    }
+
+    analysis_dicts = {
+        "connectedness_dict": connectedness_dict,
+        "friend_group_dict": friend_group_dict,
+        "loner_dict": loner_dict,
+        "most_connected_dict": most_connected_dict,
+        "least_connected_dict": least_connected_dict,
+    }
+
+    return analysis_dicts
+
+
+def get_analytics(simulation, output_dir="analytics"):
+    """
+    Generate and save analytics plots for the simulation.
+
+    Parameters:
+        simulation : The simulation object to get the analytics for
+        output_dir (str): The directory to save the analytics plots. Default is "analytics".
+    """
+
+    connectedness_dict = simulation.connectedness_dict
+    friend_group_dict = simulation.friend_group_dict
+    loner_dict = simulation.loner_dict
+    most_connected_dict = simulation.most_connected_dict
+    least_connected_dict = simulation.least_connected_dict
+
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(output_dir + "/connectedness", exist_ok=True)
+    os.makedirs(output_dir + "/friend_group", exist_ok=True)
+    os.makedirs(output_dir + "/loners", exist_ok=True)
+    os.makedirs(output_dir + "/most_connected_person", exist_ok=True)
+    os.makedirs(output_dir + "/least_connected_person", exist_ok=True)
+
+
+    time_steps = list(range(1, len(connectedness_dict["avg_friends"][0]) + 1))
+
+    for key, value in connectedness_dict.items():
+        plt.figure(figsize=(10, 5))
+        plt.plot(time_steps, connectedness_dict[key][0], marker='o', color='b', label=connectedness_dict[key][2])
+        plt.xlabel('Time Steps')
+        plt.ylabel(connectedness_dict[key][1])
+        plt.title(connectedness_dict[key][1] + " Over Time")
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(os.path.join(output_dir + "/connectedness", f'{key}.png'))
+
+    for key, value in friend_group_dict.items():
+        plt.figure(figsize=(10, 5))
+        plt.plot(time_steps, friend_group_dict[key][0], marker='o', color='b', label=friend_group_dict[key][2])
+        plt.xlabel('Time Steps')
+        plt.ylabel(friend_group_dict[key][1])
+        plt.title(friend_group_dict[key][1] + " Over Time")
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(os.path.join(output_dir + "/friend_group", f'{key}.png'))
+
+    for key, value in loner_dict.items():
+        plt.figure(figsize=(10, 5))
+        plt.plot(time_steps, loner_dict[key][0], marker='o', color='b', label=loner_dict[key][2])
+        plt.xlabel('Time Steps')
+        plt.ylabel(loner_dict[key][1])
+        plt.title(loner_dict[key][1] + " Over Time")
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(os.path.join(output_dir + "/loners", f'{key}.png'))
+
+    for key, value in most_connected_dict.items():
+        plt.figure(figsize=(10, 5))
+        plt.plot(time_steps, most_connected_dict[key][0], marker='o', color='b', label=most_connected_dict[key][2])
+        plt.xlabel('Time Steps')
+        plt.ylabel(most_connected_dict[key][1])
+        plt.title(most_connected_dict[key][1] + " Over Time")
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(os.path.join(output_dir + "/most_connected_person", f'{key}.png'))
+
+    for key, value in least_connected_dict.items():
+        plt.figure(figsize=(10, 5))
+        plt.plot(time_steps, least_connected_dict[key][0], marker='o', color='b', label=least_connected_dict[key][2])
+        plt.xlabel('Time Steps')
+        plt.ylabel(least_connected_dict[key][1])
+        plt.title(least_connected_dict[key][1] + " Over Time")
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(os.path.join(output_dir + "/least_connected_person", f'{key}.png'))
+
+    simulation.print_analysis()
 
 
 if __name__ == "__main__":
