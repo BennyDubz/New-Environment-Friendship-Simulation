@@ -41,6 +41,7 @@ for curr_simulation in range(num_simulations):
 print(f"Simulation parameters:\n\tNum people: {num_people}\n\tNum days: {num_days}\n\tMin interactions: {min_interactions}" + \
       f"\n\tMax interactions: {max_interactions}\n\tMax friends: {max_friends}")
 
+
 # Print out all averaged statistics
 print("\nAverages for most connected people:")
 for key, item in most_connected_dict_at_end.items():

@@ -1,1 +1,0 @@
-# new_environment_friendship_sim

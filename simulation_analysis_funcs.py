@@ -131,6 +131,8 @@ def get_friend_group_info(simulation):
 
      avg_fg_size --> the average number of people in each friend group
 
+     total_friendships --> the total number of friendships in the whole simulation
+
     """
 
     # Create networkx graph
@@ -140,6 +142,7 @@ def get_friend_group_info(simulation):
     results = dict()
 
     results["num_fgs"] = nx.number_connected_components(friendship_graph)
+    results["total_friendships"] = len(simulation.friendships)
 
     # friend_groups is a generator of sets of friend groups, may be useful later
     friend_groups = nx.connected_components(friendship_graph)
@@ -319,7 +322,9 @@ def get_empty_analysis_dicts():
 
     friend_group_dict = {
         "num_fgs": ([], "Number of Disconnected Friend Groups", "Number of Friend Groups"),
-        "avg_fg_size": ([], "Average Size of Each Friend Group", "Size of Friend Group")
+        "avg_fg_size": ([], "Average Size of Each Friend Group", "Size of Friend Group"),
+        "total_friendships": ([], "Total Number of Friendships", "Number of Friendships")
+
     }
 
     loner_dict = {

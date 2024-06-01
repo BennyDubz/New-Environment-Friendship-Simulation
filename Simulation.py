@@ -144,20 +144,13 @@ class Simulation:
     # Return - Number of new friendships made
     def simulate_day(self, analytics=False):
         num_new_friendships = 0
-        # leftover_people = []
 
         interaction_probs = self.__calculate_interaction_probabilities()
-        # print(interaction_probs)
-        
+
         # The number of interactions each person will have that day
         interactions_left = np.random.randint(low=self.min_interactions,
                                               high=self.max_interactions,
                                               size=self.num_people)
-
-        # # Add all people that do not have the max number of friends
-        # for person in range(self.num_people):
-        #     if len(self.people[person].friends) < self.people[person].max_friends:
-        #         leftover_people.append(person)
 
         # People who have interactions_left >= 1
         socializing_people = [i for i in range(self.num_people)]
@@ -266,7 +259,7 @@ class Simulation:
                 individual_interaction_weights[fof_idx] += (reachable_in_two[fof_idx] * self.fof_weight)
 
             # Zero out this persons entry (-1 because we are adding it to a matrix of 1s)
-            individual_interaction_weights[person_idx] = -1 # -1 because we are adding it to a matrix of 1s
+            individual_interaction_weights[person_idx] = -1
 
             # Add the weights to the matrix
             interaction_weights[person_idx] += individual_interaction_weights
